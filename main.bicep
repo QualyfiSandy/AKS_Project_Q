@@ -169,3 +169,5 @@ module appGW 'appgw.bicep' = {
 
 output controlPlaneFQDN string = aks.properties.fqdn
 output outBastionSubnetId string = bastionSubnet.id
+
+// comment
