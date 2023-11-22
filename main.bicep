@@ -1,64 +1,166 @@
-@description('The name of the Managed Cluster resource.')
-param clusterName string = 'aks101cluster'
 
+param clusterName string = 'aks-sp-cluster${randnumb}'
 param paramlocation string = resourceGroup().location
-
-@description('Optional DNS prefix to use with hosted Kubernetes API server FQDN.')
-param dnsPrefix string = 'akssandy'
-
-@description('Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 0 to 1023. Specifying 0 will apply the default disk size for that agentVMSize.')
-@minValue(0)
-@maxValue(1023)
+param dnsPrefix string = 'aksspdnsprefix${randnumb}'
 param osDiskSizeGB int = 0
-
-@description('The number of nodes for the cluster.')
-@minValue(1)
-@maxValue(50)
 param agentCount int = 3
+param agentVMSize string = 'standard_DS2_v2'
+// param linuxAdminUsername string = 'akssandy'
+// param sshRSAPublicKey string = 'ssh'
 
-@description('The size of the Virtual Machine.')
-param agentVMSize string = 'standard_d2s_v3'
+param paramNatGatewayName string = 'aks-sp-natgateway'
+param paramNatGatewayPip string = 'aks-sp-natgateway-pip'
+param paramLogAnalyticsName string = 'aks-sp-loganalytics'
+param paramTenantId string = 'd4003661-f87e-4237-9a9b-8b9c31ba2467'
+param paramAKSEIDAdminGroupId string = 'c049d1ab-87d3-491b-9c93-8bea50fbfbc3'
+param paramK8sVersion string = '1.28.3'
+param paramPodCidr string = '10.244.0.0/16'
+param paramServiceCidr string = '10.5.0.0/16'
+param paramDnsServiceIp string = '10.5.0.10'
+param randnumb string
 
-@description('User name for the Linux Virtual Machines.')
-param linuxAdminUsername string = 'akssandy'
+resource podSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'podSubnet',parent: resVnet}
+resource systemPoolSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'systemPoolSubnet',parent: resVnet}
+resource appPoolSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'appPoolSubnet',parent: resVnet}
+resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'azureBastionSubnet',parent: resVnet}
+resource appGWSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'appGWSubnet',parent: resVnet}
 
-@description('Configure all linux machines with the SSH RSA public key string. Your key should include three parts, for example \'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm\'')
-param sshRSAPublicKey string = 'ssh'
-
-param paramAcrName string = 'aksacrsandy'
-param paramNatGatewayName string = 'NatGateway-sandy'
-param paramNatGatewayPip string = 'NatGateway-pip-sandy'
+resource aksClusterUserDefinedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+  name: '${clusterName}ManagedIdentity'
+  location: paramlocation
+}
 
 resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
   name: clusterName
   location: paramlocation
   identity: {
-    type: 'SystemAssigned'
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${aksClusterUserDefinedManagedIdentity.id}':{
+      }
+    }
   }
   properties: {
+    kubernetesVersion: paramK8sVersion
+    disableLocalAccounts: true
+    enableRBAC: true
     dnsPrefix: dnsPrefix
     agentPoolProfiles: [
       {
-        name: 'agentpool'
+        name: 'systempool'
         osDiskSizeGB: osDiskSizeGB
         count: agentCount
+        minCount: 2
+        maxCount: 10
+        maxPods: 50
+        enableAutoScaling: true
         vmSize: agentVMSize
-        osType: 'MarinerOS'
+        vnetSubnetID: systemPoolSubnet.id
+        podSubnetID: podSubnet.id
+        osType: 'Linux'
+        osSKU: 'CBLMariner'
         mode: 'System'
-        osProfile: {
-          linuxProfile: {
-            adminUsername: linuxAdminUsername
-            ssh: {
-              publicKeys: [
-                {
-                  keyData: sshRSAPublicKey
-                }
-              ]
-            }
-          }
-        }
+        // osProfile: {
+        //   linuxProfile: {
+        //     adminUsername: linuxAdminUsername
+        //     ssh: {
+        //       publicKeys: [
+        //         {
+        //           keyData: sshRSAPublicKey
+        //         }
+        //       ]
+        //     }
+        //   }
+        // }
+      }
+      {
+        name: 'apppool'
+        osDiskSizeGB: osDiskSizeGB
+        count: agentCount
+        minCount: 2
+        maxCount: 10
+        maxPods: 50
+        enableAutoScaling: true
+        vmSize: agentVMSize
+        vnetSubnetID: appPoolSubnet.id
+        podSubnetID: podSubnet.id
+        osType: 'Linux'
+        osSKU: 'CBLMariner'
+        mode: 'System'
+      //   osProfile: {
+      //     linuxProfile: {
+      //       adminUsername: linuxAdminUsername
+      //       ssh: {
+      //         publicKeys: [
+      //           {
+      //             keyData: sshRSAPublicKey
+      //           }
+      //         ]
+      //       }
+      //     }
+      //   }
       }
     ]
+    aadProfile: {
+      managed: true
+      enableAzureRBAC: true
+      adminGroupObjectIDs: [
+        '${paramAKSEIDAdminGroupId}'
+      ]
+      tenantID: paramTenantId
+    }
+    networkProfile: {
+      outboundType: 'userAssignedNATGateway'
+      networkPlugin: 'azure'
+      networkPolicy: 'azure'
+      podCidr: paramPodCidr
+      serviceCidr: paramServiceCidr
+      dnsServiceIP: paramDnsServiceIp
+    }
+    addonProfiles: {
+      ingressApplicationGateway: {
+        config: {
+          applicationGatewayId: modAppGW.outputs.outAppGatewayId
+        }
+        enabled: true
+      }
+      omsAgent: {
+        enabled: true
+        config: {
+          logAnalyticsWorkspaceResourceID: resLogAnalytics.id
+        }
+      }
+    }
+    azureMonitorProfile: {
+      metrics: {
+        enabled: true
+        kubeStateMetrics: {
+          metricAnnotationsAllowList: ''
+          metricLabelsAllowlist: ''
+        }
+      }
+    }
+  }
+}
+
+resource resLogAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: paramLogAnalyticsName
+  location: paramlocation
+  properties: {
+    sku: {
+      name: 'PerNode'
+    }
+    retentionInDays: 90
+    forceCmkForQuery: false
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+    features: {
+      disableLocalAuth: false
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
+    workspaceCapping: {
+      dailyQuotaGb: -1
+    }
   }
 }
 
@@ -91,20 +193,9 @@ resource natgateway 'Microsoft.Network/natGateways@2021-05-01' = {
   }
 }
 
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-06-01-preview' = {
-  name: paramAcrName
-  location: paramlocation
-  sku: {
-    name: 'Basic'
-  }
-  properties: {
-    adminUserEnabled: true
-  }
-}
-
 // <-- CORE VIRTUAL NETWORK --> //
-resource resVnet 'Microsoft.Network/virtualNetworks@2018-10-01' = {
-  name: 'vnet-${paramlocation}-001'
+resource resVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
+  name: 'aks-sp-vnet-${paramlocation}'
   location: paramlocation
   tags: {
     Owner: 'Sandy'
@@ -113,35 +204,51 @@ resource resVnet 'Microsoft.Network/virtualNetworks@2018-10-01' = {
   properties: {
     addressSpace: {
       addressPrefixes: [
-        '10.20.0.0/16'
+        '10.0.0.0/8'
       ]
     }
     subnets: [
       {
         name: 'azureBastionSubnet'
         properties: {
-          addressPrefix: '10.20.1.0/24'
+          addressPrefix: '10.4.2.0/24'
         }
       }
       {
         name: 'appGWSubnet'
         properties: {
-          addressPrefix: '10.20.2.0/24'
+          addressPrefix: '10.4.1.0/24'
       }
       }
       {
-        name: 'KVSubnet'
+        name: 'systemPoolSubnet'
         properties: {
-          addressPrefix: '10.20.3.0/24'
+          addressPrefix: '10.1.0.0/16'
+          natGateway: {
+            id: natgateway.id
+          }
+      }
+      }
+      {
+        name: 'appPoolSubnet'
+        properties: {
+          addressPrefix: '10.2.0.0/16'
+          natGateway: {
+            id: natgateway.id
+          }
+      }
+      }
+      {
+        name: 'podSubnet'
+        properties: {
+          addressPrefix: '10.3.0.0/16'
+          natGateway: {
+            id: natgateway.id
+          }
       }
       }
     ]
   }
-}
-
-resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
-  name: 'azureBastionSubnet'
-  parent: resVnet
 }
 
 module modBastion 'bastion.bicep' = {
@@ -152,22 +259,57 @@ module modBastion 'bastion.bicep' = {
   }
 }
 
-resource appGWSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {
-  name: 'appGWSubnet'
-  parent: resVnet
-}
-
-module appGW 'appgw.bicep' = {
+module modAppGW 'appgw.bicep' = {
   name: 'AppGateway'
   params: {
     paramAgwSubnetId: appGWSubnet.id
-    paramAppGatewayName: 'appGW'
+    paramAppGatewayName: 'aks-sp-appGW'
     paramlocation: paramlocation
-    paramProdFqdn: aks.properties.fqdn
+  }
+}
+
+module managedPrometheus 'managedPrometheus.bicep' = {
+  name: 'aks-sp-Prometheus'
+  params: {
+    clusterName: aks.name
+    paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
+    paramlocation: paramlocation
+    actionGroupId: actionGroup.outputs.outActionGroupId
+  }
+}
+
+module managedGrafana 'managedGrafana.bicep' = {
+  name: 'Grafana'
+  params: {
+    paramGrafanaName: 'aks-sp-grafana'
+    paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
+    paramlocation: paramlocation
+    paramPrometheusId: managedPrometheus.outputs.id
+    paramPrometheusName: 'Prometheus'
+  }
+}
+
+module actionGroup 'actionGroup.bicep' = {
+  name: 'Action-Group'
+  params: {
+    emailAddress: 'alexander.pendleton@qualyfi.co.uk'
+    paramActionGroupName: 'aks-sp-action-group'
+  }
+}
+
+module identity 'identity.bicep' = {
+  name: 'Identity'
+  dependsOn: [
+    modAppGW
+    aks
+  ]
+  params: {
+    aksClusterName: clusterName
+    applicationGatewayIdentityName: modAppGW.outputs.outAppGatewayManName
   }
 }
 
 output controlPlaneFQDN string = aks.properties.fqdn
 output outBastionSubnetId string = bastionSubnet.id
-
-// comment
+output outAKSId string = aks.id
+output outAKSName string = aks.name

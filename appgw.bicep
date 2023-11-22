@@ -1,22 +1,28 @@
 param paramAppGatewayName string
 param paramlocation string
 param paramAgwSubnetId string
-param paramProdFqdn string
 
 var varAgwId = resourceId('Microsoft.Network/applicationGateways', paramAppGatewayName)
+
+resource applicationGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${paramAppGatewayName}Identity'
+  location: paramlocation
+}
 
 // <-- APPLICATION GATEWAY RESOURCES --> //
 resource resApplicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' = {
   name: paramAppGatewayName
-  tags: {
-    Owner: 'Sandy'
-    Dept: 'Hub'
-  }
   location: paramlocation
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${applicationGatewayIdentity.id}': {}
+    }
+  }
   properties: {
     sku: {
-      name: 'Standard_v2'
-      tier: 'Standard_v2'
+      name: 'WAF_v2'
+      tier: 'WAF_v2'
     }
     autoscaleConfiguration:{
       minCapacity: 1
@@ -53,13 +59,6 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2020-11-01
     backendAddressPools: [
       {
         name: 'myBackendPool'
-        properties: {
-          backendAddresses: [
-            {
-              fqdn: paramProdFqdn
-            }
-          ]
-        }
       }
     ]
     backendHttpSettingsCollection: [
@@ -69,6 +68,7 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2020-11-01
           port: 80
           protocol: 'Http'
           cookieBasedAffinity: 'Disabled'
+          pickHostNameFromBackendAddress: true
         }
       }
     ]
@@ -92,6 +92,7 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2020-11-01
         name: 'myRoutingRule'
         properties: {
           ruleType: 'Basic'
+          priority: 1000
           httpListener: {
             id: '${varAgwId}/httpListeners/myListener'
           }
@@ -104,6 +105,74 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2020-11-01
         }
       }
     ]
+    firewallPolicy: {
+      id: wafPolicy.id
+    }
+  }
+}
+
+resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2022-07-01' = {
+  name: 'WAF-Policy'
+  location: paramlocation
+  properties: {
+    customRules: [
+      {
+        name: 'BlockMe'
+        priority: 1
+        ruleType: 'MatchRule'
+        action: 'Block'
+        matchConditions: [
+          {
+            matchVariables: [
+              {
+                variableName: 'QueryString'
+              }
+            ]
+            operator: 'Contains'
+            negationConditon: false
+            matchValues: [
+              'blockme'
+            ]
+          }
+        ]
+      }
+      {
+        name: 'BlockEvilBot'
+        priority: 2
+        ruleType: 'MatchRule'
+        action: 'Block'
+        matchConditions: [
+          {
+            matchVariables: [
+              {
+                variableName: 'RequestHeaders'
+                selector: 'User-Agent'
+              }
+            ]
+            operator: 'Contains'
+            negationConditon: false
+            matchValues: [
+              'evilbot'
+            ]
+            transforms: [
+              'Lowercase'
+            ]
+          }
+        ]
+      }
+    ]
+    policySettings: {
+      mode: 'Prevention'
+      state: 'Enabled'
+    }
+    managedRules: {
+      managedRuleSets: [
+        {
+          ruleSetType: 'OWASP'
+          ruleSetVersion: '3.2'
+        }
+      ]
+    }
   }
 }
 
@@ -123,3 +192,8 @@ resource pipAppGateway 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
     publicIPAddressVersion: 'IPv4'
   }
 }
+
+output outAppGatewayId string = resApplicationGateway.id
+output outAppGatewayManId string = applicationGatewayIdentity.id
+output outAppGatewayName string = resApplicationGateway.name
+output outAppGatewayManName string = applicationGatewayIdentity.name

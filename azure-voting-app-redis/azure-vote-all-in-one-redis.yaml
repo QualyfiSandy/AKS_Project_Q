@@ -79,3 +79,4 @@ spec:
   - port: 80
   selector:
     app: azure-vote-front
+
