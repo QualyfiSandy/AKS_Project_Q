@@ -2,7 +2,7 @@
 param clusterName string = 'aks-sp-cluster${randnumb}'
 param paramlocation string = resourceGroup().location
 param dnsPrefix string = 'aksspdnsprefix${randnumb}'
-param osDiskSizeGB int = 0
+// param osDiskSizeGB int = 0
 param agentCount int = 3
 param agentVMSize string = 'standard_DS2_v2'
 // param linuxAdminUsername string = 'akssandy'
@@ -33,6 +33,10 @@ resource aksClusterUserDefinedManagedIdentity 'Microsoft.ManagedIdentity/userAss
 resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
   name: clusterName
   location: paramlocation
+  sku: {
+    name: 'Base'
+    tier: 'Free'
+  }
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -48,7 +52,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
     agentPoolProfiles: [
       {
         name: 'systempool'
-        osDiskSizeGB: osDiskSizeGB
         count: agentCount
         minCount: 2
         maxCount: 10
@@ -75,7 +78,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
       }
       {
         name: 'apppool'
-        osDiskSizeGB: osDiskSizeGB
         count: agentCount
         minCount: 2
         maxCount: 10
@@ -118,6 +120,9 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
       dnsServiceIP: paramDnsServiceIp
     }
     addonProfiles: {
+      azureKeyVaultSecretsProvider: {
+        enabled: true
+      }
       ingressApplicationGateway: {
         config: {
           applicationGatewayId: modAppGW.outputs.outAppGatewayId
@@ -306,6 +311,7 @@ module identity 'identity.bicep' = {
   params: {
     aksClusterName: clusterName
     applicationGatewayIdentityName: modAppGW.outputs.outAppGatewayManName
+    aksIdentityName: aksClusterUserDefinedManagedIdentity.name
   }
 }
 

@@ -2,15 +2,28 @@ param paramAppGatewayName string
 param paramlocation string
 param paramAgwSubnetId string
 
-var varAgwId = resourceId('Microsoft.Network/applicationGateways', paramAppGatewayName)
+// var varAgwId = resourceId('Microsoft.Network/applicationGateways', paramAppGatewayName)
 
 resource applicationGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: '${paramAppGatewayName}Identity'
   location: paramlocation
 }
 
+resource pipAppGateway 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
+  name: 'pip-agw-${paramlocation}'
+  location: paramlocation
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    idleTimeoutInMinutes: 4
+    publicIPAddressVersion: 'IPv4'
+  }
+}
+
 // <-- APPLICATION GATEWAY RESOURCES --> //
-resource resApplicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' = {
+resource resApplicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
   name: paramAppGatewayName
   location: paramlocation
   identity: {
@@ -25,8 +38,8 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2020-11-01
       tier: 'WAF_v2'
     }
     autoscaleConfiguration:{
-      minCapacity: 1
-      maxCapacity: 2
+      minCapacity: 0
+      maxCapacity: 10
     }
     gatewayIPConfigurations: [
       {
@@ -68,6 +81,7 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2020-11-01
           port: 80
           protocol: 'Http'
           cookieBasedAffinity: 'Disabled'
+          requestTimeout: 30
           pickHostNameFromBackendAddress: true
         }
       }
@@ -77,10 +91,10 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2020-11-01
         name: 'myListener'
         properties: {
           frontendIPConfiguration: {
-            id: '${varAgwId}/frontendIPConfigurations/appGatewayFrontendIp'
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', paramAppGatewayName, 'frontendPIP')
           }
           frontendPort: {
-            id: '${varAgwId}/frontendPorts/port_80'
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', paramAppGatewayName, 'port_80')
           }
           protocol: 'Http'
           sslCertificate: null
@@ -94,13 +108,13 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2020-11-01
           ruleType: 'Basic'
           priority: 1000
           httpListener: {
-            id: '${varAgwId}/httpListeners/myListener'
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', paramAppGatewayName, '/httpListeners/myListener')
           }
           backendAddressPool: {
-            id: '${varAgwId}/backendAddressPools/myBackendPool'
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', paramAppGatewayName, '/backendAddressPools/myBackendPool')
           }
           backendHttpSettings: {
-            id: '${varAgwId}/backendHttpSettingsCollection/myHTTPSetting'
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', paramAppGatewayName, '/backendHttpSettingsCollection/myHTTPSetting')
           }
         }
       }
@@ -176,22 +190,7 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
   }
 }
 
-resource pipAppGateway 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
-  name: 'pip-agw-${paramlocation}'
-  tags: {
-    Owner: 'Sandy'
-    Dept: 'Hub'
-  }
-  location: paramlocation
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Static'
-    idleTimeoutInMinutes: 4
-    publicIPAddressVersion: 'IPv4'
-  }
-}
+
 
 output outAppGatewayId string = resApplicationGateway.id
 output outAppGatewayManId string = applicationGatewayIdentity.id
