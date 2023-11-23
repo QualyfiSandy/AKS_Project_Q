@@ -1,12 +1,9 @@
 az login
 
-random_number="$((RANDOM % 10000))"
-echo "$random_number"
-
-RG="aks-exercise-sandy-$random_number"
+RG="azure-devops-track-aks-exercise-sandy"
 LOC=uksouth
-ACRNAME="aksacrsandy$random_number"
-CLUSTER="aks-sp-cluster$random_number"
+ACRNAME="aksacrsandy"
+CLUSTER="aks-sp-cluster"
 
 az group create --name $RG --location $LOC
 
@@ -24,7 +21,7 @@ az acr build --registry $ACRNAME --resource-group $RG --image mcr.microsoft.com/
 
 az acr login --name $ACRNAME
 
-az deployment group create --resource-group $RG --template-file main.bicep --parameters randnumb=$random_number
+az deployment group create --resource-group $RG --template-file main.bicep
 
 az aks get-credentials --resource-group $RG --name $CLUSTER
 

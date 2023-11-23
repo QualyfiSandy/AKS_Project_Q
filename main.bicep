@@ -1,7 +1,7 @@
 
-param clusterName string = 'aks-sp-cluster${randnumb}'
+param clusterName string = 'aks-sp-cluster'
 param paramlocation string = resourceGroup().location
-param dnsPrefix string = 'aksspdnsprefix${randnumb}'
+param dnsPrefix string = 'aksspdnsprefix'
 // param osDiskSizeGB int = 0
 param agentCount int = 3
 param agentVMSize string = 'standard_DS2_v2'
@@ -17,7 +17,6 @@ param paramK8sVersion string = '1.28.3'
 param paramPodCidr string = '10.244.0.0/16'
 param paramServiceCidr string = '10.5.0.0/16'
 param paramDnsServiceIp string = '10.5.0.10'
-param randnumb string
 
 resource podSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'podSubnet',parent: resVnet}
 resource systemPoolSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'systemPoolSubnet',parent: resVnet}
