@@ -2,11 +2,10 @@
 param clusterName string = 'aks-sp-cluster'
 param paramlocation string = resourceGroup().location
 param dnsPrefix string = 'aksspdnsprefix'
-// param osDiskSizeGB int = 0
 param agentCount int = 3
 param agentVMSize string = 'standard_DS2_v2'
 // param linuxAdminUsername string = 'akssandy'
-// param sshRSAPublicKey string = 'ssh'
+// param sshRSAPublicKey string = 
 
 param paramNatGatewayName string = 'aks-sp-natgateway'
 param paramNatGatewayPip string = 'aks-sp-natgateway-pip'
@@ -311,6 +310,14 @@ module identity 'identity.bicep' = {
     aksClusterName: clusterName
     applicationGatewayIdentityName: modAppGW.outputs.outAppGatewayManName
     aksIdentityName: aksClusterUserDefinedManagedIdentity.name
+  }
+}
+
+module modKeyvault 'keyvault.bicep' = {
+  name: 'keyVault'
+  params: {
+    paramlocation: paramlocation
+    paramkeyVaultName: 'aksspkeyvault2911'
   }
 }
 

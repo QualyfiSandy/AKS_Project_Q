@@ -91,7 +91,7 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2023-05-01
         name: 'myListener'
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', paramAppGatewayName, 'frontendPIP')
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', paramAppGatewayName, 'appGatewayFrontendIp')
           }
           frontendPort: {
             id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', paramAppGatewayName, 'port_80')
@@ -108,13 +108,13 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2023-05-01
           ruleType: 'Basic'
           priority: 1000
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', paramAppGatewayName, '/httpListeners/myListener')
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', paramAppGatewayName, 'myListener')
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', paramAppGatewayName, '/backendAddressPools/myBackendPool')
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', paramAppGatewayName, 'myBackendPool')
           }
           backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', paramAppGatewayName, '/backendHttpSettingsCollection/myHTTPSetting')
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', paramAppGatewayName, 'myHTTPSetting')
           }
         }
       }
