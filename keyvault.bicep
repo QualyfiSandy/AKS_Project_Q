@@ -1,31 +1,18 @@
 param paramlocation string
 param paramkeyVaultName string
-param objectIds array = []
 param skuName string = 'standard'
 param tenantId string = subscription().tenantId
+param paramKeyVaultManagedIdentityName string
+
+resource KVManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: paramKeyVaultManagedIdentityName
+  location: paramlocation
+}
 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: paramkeyVaultName
   location: paramlocation
   properties: {
-    accessPolicies: [for objectId in objectIds: {
-      tenantId: subscription().tenantId
-      objectId: objectId
-      permissions: {
-        keys: [
-          'get'
-          'list'
-        ]
-        secrets: [
-          'get'
-          'list'
-        ]
-        certificates: [
-          'get'
-          'list'
-        ]
-      }
-    }]
     sku: {
       family: 'A'
       name: skuName
@@ -41,3 +28,5 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
     enableSoftDelete: true
   }
 }
+
+output outKVManagedIdentityName string = KVManagedIdentity.name
