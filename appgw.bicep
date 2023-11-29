@@ -12,14 +12,8 @@ resource applicationGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdent
 resource pipAppGateway 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
   name: 'pip-agw-${paramlocation}'
   location: paramlocation
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Static'
-    idleTimeoutInMinutes: 4
-    publicIPAddressVersion: 'IPv4'
-  }
+  sku: {name: 'Standard'}
+  properties: {publicIPAllocationMethod: 'Static'}
 }
 
 // <-- APPLICATION GATEWAY RESOURCES --> //
@@ -97,7 +91,6 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2023-05-01
             id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', paramAppGatewayName, 'port_80')
           }
           protocol: 'Http'
-          sslCertificate: null
         }
       }
     ]
@@ -189,8 +182,6 @@ resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPo
     }
   }
 }
-
-
 
 output outAppGatewayId string = resApplicationGateway.id
 output outAppGatewayManId string = applicationGatewayIdentity.id

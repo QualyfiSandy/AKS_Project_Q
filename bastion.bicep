@@ -2,7 +2,7 @@ param paramlocation string
 param paramBastionSubnet string
 
 resource pipAzureBastion 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
-  name: 'aks-sp-${paramlocation}'
+  name: 'bastion-sp-${paramlocation}'
   tags: {
     Owner: 'Sandy'
     Dept: 'Hub'

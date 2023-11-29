@@ -1,150 +1,12 @@
 
-param clusterName string = 'aks-sp-cluster'
 param paramlocation string = resourceGroup().location
-param dnsPrefix string = 'aksspdnsprefix'
-param agentCount int = 3
-param agentVMSize string = 'standard_DS2_v2'
-// param linuxAdminUsername string = 'akssandy'
-// param sshRSAPublicKey string = 
-
 param paramNatGatewayName string = 'aks-sp-natgateway'
 param paramNatGatewayPip string = 'aks-sp-natgateway-pip'
 param paramLogAnalyticsName string = 'aks-sp-loganalytics'
-param paramTenantId string = 'd4003661-f87e-4237-9a9b-8b9c31ba2467'
-param paramAKSEIDAdminGroupId string = 'c049d1ab-87d3-491b-9c93-8bea50fbfbc3'
-param paramK8sVersion string = '1.28.3'
-param paramPodCidr string = '10.244.0.0/16'
-param paramServiceCidr string = '10.5.0.0/16'
-param paramDnsServiceIp string = '10.5.0.10'
+param aksClusterSshPublicKey string
 
-resource podSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'podSubnet',parent: resVnet}
-resource systemPoolSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'systemPoolSubnet',parent: resVnet}
-resource appPoolSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'appPoolSubnet',parent: resVnet}
 resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'azureBastionSubnet',parent: resVnet}
 resource appGWSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'appGWSubnet',parent: resVnet}
-
-resource aksClusterUserDefinedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
-  name: '${clusterName}ManagedIdentity'
-  location: paramlocation
-}
-
-resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
-  name: clusterName
-  location: paramlocation
-  sku: {
-    name: 'Base'
-    tier: 'Free'
-  }
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${aksClusterUserDefinedManagedIdentity.id}':{
-      }
-    }
-  }
-  properties: {
-    kubernetesVersion: paramK8sVersion
-    disableLocalAccounts: true
-    enableRBAC: true
-    dnsPrefix: dnsPrefix
-    agentPoolProfiles: [
-      {
-        name: 'systempool'
-        count: agentCount
-        minCount: 2
-        maxCount: 10
-        maxPods: 50
-        enableAutoScaling: true
-        vmSize: agentVMSize
-        vnetSubnetID: systemPoolSubnet.id
-        podSubnetID: podSubnet.id
-        osType: 'Linux'
-        osSKU: 'CBLMariner'
-        mode: 'System'
-        // osProfile: {
-        //   linuxProfile: {
-        //     adminUsername: linuxAdminUsername
-        //     ssh: {
-        //       publicKeys: [
-        //         {
-        //           keyData: sshRSAPublicKey
-        //         }
-        //       ]
-        //     }
-        //   }
-        // }
-      }
-      {
-        name: 'apppool'
-        count: agentCount
-        minCount: 2
-        maxCount: 10
-        maxPods: 50
-        enableAutoScaling: true
-        vmSize: agentVMSize
-        vnetSubnetID: appPoolSubnet.id
-        podSubnetID: podSubnet.id
-        osType: 'Linux'
-        osSKU: 'CBLMariner'
-        mode: 'System'
-      //   osProfile: {
-      //     linuxProfile: {
-      //       adminUsername: linuxAdminUsername
-      //       ssh: {
-      //         publicKeys: [
-      //           {
-      //             keyData: sshRSAPublicKey
-      //           }
-      //         ]
-      //       }
-      //     }
-      //   }
-      }
-    ]
-    aadProfile: {
-      managed: true
-      enableAzureRBAC: true
-      adminGroupObjectIDs: [
-        '${paramAKSEIDAdminGroupId}'
-      ]
-      tenantID: paramTenantId
-    }
-    networkProfile: {
-      outboundType: 'userAssignedNATGateway'
-      networkPlugin: 'azure'
-      networkPolicy: 'azure'
-      podCidr: paramPodCidr
-      serviceCidr: paramServiceCidr
-      dnsServiceIP: paramDnsServiceIp
-    }
-    addonProfiles: {
-      azureKeyVaultSecretsProvider: {
-        enabled: true
-      }
-      ingressApplicationGateway: {
-        config: {
-          applicationGatewayId: modAppGW.outputs.outAppGatewayId
-        }
-        enabled: true
-      }
-      omsAgent: {
-        enabled: true
-        config: {
-          logAnalyticsWorkspaceResourceID: resLogAnalytics.id
-        }
-      }
-    }
-    azureMonitorProfile: {
-      metrics: {
-        enabled: true
-        kubeStateMetrics: {
-          metricAnnotationsAllowList: ''
-          metricLabelsAllowlist: ''
-        }
-      }
-    }
-  }
-}
 
 resource resLogAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: paramLogAnalyticsName
@@ -254,6 +116,27 @@ resource resVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   }
 }
 
+module modAksCluster 'akscluster.bicep' = {
+  name: 'AKS'
+  params: {
+    clusterName: 'aks-sp-cluster'
+    paramAppGwId: modAppGW.outputs.outAppGatewayId
+    agentCount: 3
+    agentVMSize: 'standard_DS2_v2'
+    dnsPrefix: 'aksspdnsprefix'
+    paramAKSEIDAdminGroupId: 'c049d1ab-87d3-491b-9c93-8bea50fbfbc3'
+    paramK8sVersion: '1.28.3'
+    paramlocation: paramlocation
+    paramDnsServiceIp: '10.5.0.10'
+    paramPodCidr: '10.244.0.0/16'
+    paramServiceCidr: '10.5.0.0/16'
+    paramTenantId: 'd4003661-f87e-4237-9a9b-8b9c31ba2467'
+    paramLogAnalyticsId: resLogAnalytics.id
+    linuxAdminUsername: 'akssandyp'
+    sshRSAPublicKey: aksClusterSshPublicKey
+  }
+}
+
 module modBastion 'bastion.bicep' = {
   name: 'Bastion'
   params: {
@@ -274,7 +157,7 @@ module modAppGW 'appgw.bicep' = {
 module managedPrometheus 'managedPrometheus.bicep' = {
   name: 'aks-sp-Prometheus'
   params: {
-    clusterName: aks.name
+    clusterName: modAksCluster.outputs.outClusterName
     paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
     paramlocation: paramlocation
     actionGroupId: actionGroup.outputs.outActionGroupId
@@ -304,24 +187,21 @@ module identity 'identity.bicep' = {
   name: 'Identity'
   dependsOn: [
     modAppGW
-    aks
+    modAksCluster
   ]
   params: {
-    aksClusterName: clusterName
+    aksClusterName: modAksCluster.outputs.outClusterName
     applicationGatewayIdentityName: modAppGW.outputs.outAppGatewayManName
-    aksIdentityName: aksClusterUserDefinedManagedIdentity.name
+    aksIdentityName: modAksCluster.outputs.outClusterManIdentityName
   }
 }
 
-module modKeyvault 'keyvault.bicep' = {
-  name: 'keyVault'
-  params: {
-    paramlocation: paramlocation
-    paramkeyVaultName: 'aksspkeyvault2911'
-  }
-}
+// module modKeyvault 'keyvault.bicep' = {
+//   name: 'keyVault'
+//   params: {
+//     paramlocation: paramlocation
+//     paramkeyVaultName: 'aksspkeyvault2911'
+//   }
+// }
 
-output controlPlaneFQDN string = aks.properties.fqdn
 output outBastionSubnetId string = bastionSubnet.id
-output outAKSId string = aks.id
-output outAKSName string = aks.name
