@@ -100,9 +100,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
       dnsServiceIP: paramDnsServiceIp
     }
     addonProfiles: {
-      azureKeyVaultSecretsProvider: {
-        enabled: true
-      }
       ingressApplicationGateway: {
         config: {
           applicationGatewayId: paramAppGwId

@@ -4,8 +4,8 @@ param paramNatGatewayName string = 'aks-sp-natgateway'
 param paramNatGatewayPip string = 'aks-sp-natgateway-pip'
 param paramLogAnalyticsName string = 'aks-sp-loganalytics'
 param aksClusterSshPublicKey string
-param paramKeyVaultName string = 'aksspkeyvault2911'
-param paramKeyVaultManagedIdentityName string = '${paramKeyVaultName}ManagedIdentity'
+param paramCliKeyVaultName string
+param paramKeyVaultManagedIdentityName string = '${paramCliKeyVaultName}ManagedIdentity'
 
 resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'azureBastionSubnet',parent: resVnet}
 resource appGWSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'appGWSubnet',parent: resVnet}
@@ -196,7 +196,7 @@ module identity 'identity.bicep' = {
     applicationGatewayIdentityName: modAppGW.outputs.outAppGatewayManName
     aksIdentityName: modAksCluster.outputs.outClusterManIdentityName
     paramKeyVaultManagedIdentityName: paramKeyVaultManagedIdentityName
-    paramkeyVaultName: paramKeyVaultName
+    paramkeyVaultName: paramCliKeyVaultName
   }
 }
 
@@ -204,7 +204,7 @@ module modKeyvault 'keyvault.bicep' = {
   name: 'keyVault'
   params: {
     paramlocation: paramlocation
-    paramkeyVaultName: paramKeyVaultName
+    paramkeyVaultName: paramCliKeyVaultName
     paramKeyVaultManagedIdentityName: paramKeyVaultManagedIdentityName
   }
 }
