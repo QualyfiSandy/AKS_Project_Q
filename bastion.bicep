@@ -1,5 +1,5 @@
 param paramlocation string
-// param paramBastionSubnet string
+param paramBastionSubnet string
 param paramBastionSku string
 
 resource resVnet 'Microsoft.Network/virtualNetworks@2023-05-01' existing = {name: 'aks-sp-vnet-${paramlocation}'}
@@ -16,18 +16,15 @@ resource azureBastion 'Microsoft.Network/bastionHosts@2023-05-01' = {
   location: paramlocation
   sku: {name: paramBastionSku}
   properties: {
-    virtualNetwork: {
-      id: resVnet.id
-    }
     ipConfigurations: [
-      // {
-      //   name: 'hub-subnet'
-      //   properties: {
-      //     privateIPAllocationMethod: 'Dynamic'
-      //     subnet: {id: paramBastionSubnet}
-      //     publicIPAddress: {id: pipAzureBastion.id}
-      //   }
-      // }
+      {
+        name: 'hub-subnet'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {id: paramBastionSubnet}
+          publicIPAddress: {id: pipAzureBastion.id}
+        }
+      }
     ]
   }
 }
