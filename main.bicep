@@ -118,7 +118,7 @@ module modBastion 'bastion.bicep' = {
   params: {
     paramlocation: paramlocation
     paramBastionSubnet: bastionSubnet.id
-    paramBastionSku: 'Developer'
+    paramBastionSku: 'Basic'
   }
 }
 
