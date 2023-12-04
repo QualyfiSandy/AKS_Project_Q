@@ -3,12 +3,14 @@ az login
 # Parameters
 
 RG="azure-devops-track-aks-exercise-sandy"
-LOC=uksouth
+LOC=northcentralus
 ACRNAME="aksacrsandy"
 CLUSTER="aks-sp-cluster"
 KV="aks-sp-keyvault-a3"
 SECRET="testsecret"
 VALUE="testsecretvalue"
+
+az account set --subscription "e5cfa658-369f-4218-b58e-cece3814d3f1"
 
 az group create --name $RG --location $LOC
 

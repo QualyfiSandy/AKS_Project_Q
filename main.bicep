@@ -34,28 +34,18 @@ resource resLogAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' =
 resource natGatewayPublicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: paramNatGatewayPip
   location: paramlocation
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAddressVersion: 'IPv4'
-    publicIPAllocationMethod: 'Static'
-    idleTimeoutInMinutes: 4
-  }
+  sku: {name: 'Standard'}
+  properties: {publicIPAllocationMethod: 'Static'}
 }
 
 resource natgateway 'Microsoft.Network/natGateways@2021-05-01' = {
   name: paramNatGatewayName
   location: paramlocation
-  sku: {
-    name: 'Standard'
-  }
+  sku: {name: 'Standard'}
   properties: {
     idleTimeoutInMinutes: 4
     publicIpAddresses: [
-      {
-        id: natGatewayPublicIp.id
-      }
+      {id: natGatewayPublicIp.id}
     ]
   }
 }
@@ -64,54 +54,38 @@ resource natgateway 'Microsoft.Network/natGateways@2021-05-01' = {
 resource resVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: 'aks-sp-vnet-${paramlocation}'
   location: paramlocation
-  tags: {
-    Owner: 'Sandy'
-    Dept: 'Infrastructure'
-  }
   properties: {
     addressSpace: {
-      addressPrefixes: [
-        '10.0.0.0/8'
-      ]
+      addressPrefixes: ['10.0.0.0/8']
     }
     subnets: [
       {
         name: 'azureBastionSubnet'
-        properties: {
-          addressPrefix: '10.4.2.0/24'
-        }
+        properties: {addressPrefix: '10.4.2.0/24'}
       }
       {
         name: 'appGWSubnet'
-        properties: {
-          addressPrefix: '10.4.1.0/24'
-      }
+        properties: {addressPrefix: '10.4.1.0/24'}
       }
       {
         name: 'systemPoolSubnet'
         properties: {
           addressPrefix: '10.1.0.0/16'
-          natGateway: {
-            id: natgateway.id
-          }
+          natGateway: {id: natgateway.id}
       }
       }
       {
         name: 'appPoolSubnet'
         properties: {
           addressPrefix: '10.2.0.0/16'
-          natGateway: {
-            id: natgateway.id
-          }
+          natGateway: {id: natgateway.id}
       }
       }
       {
         name: 'podSubnet'
         properties: {
           addressPrefix: '10.3.0.0/16'
-          natGateway: {
-            id: natgateway.id
-          }
+          natGateway: {id: natgateway.id}
       }
       }
     ]
@@ -124,7 +98,7 @@ module modAksCluster 'akscluster.bicep' = {
     clusterName: 'aks-sp-cluster'
     paramAppGwId: modAppGW.outputs.outAppGatewayId
     agentCount: 3
-    agentVMSize: 'standard_DS2_v2'
+    agentVMSize: 'standard_B2s'
     dnsPrefix: 'aksspdnsprefix'
     paramAKSEIDAdminGroupId: 'c049d1ab-87d3-491b-9c93-8bea50fbfbc3'
     paramK8sVersion: '1.28.3'
@@ -143,7 +117,8 @@ module modBastion 'bastion.bicep' = {
   name: 'Bastion'
   params: {
     paramlocation: paramlocation
-    paramBastionSubnet: bastionSubnet.id
+    // paramBastionSubnet: bastionSubnet.id
+    paramBastionSku: 'Developer'
   }
 }
 

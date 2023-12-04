@@ -28,8 +28,8 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2023-05-01
   }
   properties: {
     sku: {
-      name: 'WAF_v2'
-      tier: 'WAF_v2'
+      name: 'Standard_v2'
+      tier: 'Standard_v2'
     }
     autoscaleConfiguration:{
       minCapacity: 0
@@ -112,76 +112,76 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2023-05-01
         }
       }
     ]
-    firewallPolicy: {
-      id: wafPolicy.id
-    }
+    // firewallPolicy: {
+    //   id: wafPolicy.id
+    // }
   }
 }
 
-resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2022-07-01' = {
-  name: 'WAF-Policy'
-  location: paramlocation
-  properties: {
-    customRules: [
-      {
-        name: 'BlockMe'
-        priority: 1
-        ruleType: 'MatchRule'
-        action: 'Block'
-        matchConditions: [
-          {
-            matchVariables: [
-              {
-                variableName: 'QueryString'
-              }
-            ]
-            operator: 'Contains'
-            negationConditon: false
-            matchValues: [
-              'blockme'
-            ]
-          }
-        ]
-      }
-      {
-        name: 'BlockEvilBot'
-        priority: 2
-        ruleType: 'MatchRule'
-        action: 'Block'
-        matchConditions: [
-          {
-            matchVariables: [
-              {
-                variableName: 'RequestHeaders'
-                selector: 'User-Agent'
-              }
-            ]
-            operator: 'Contains'
-            negationConditon: false
-            matchValues: [
-              'evilbot'
-            ]
-            transforms: [
-              'Lowercase'
-            ]
-          }
-        ]
-      }
-    ]
-    policySettings: {
-      mode: 'Prevention'
-      state: 'Enabled'
-    }
-    managedRules: {
-      managedRuleSets: [
-        {
-          ruleSetType: 'OWASP'
-          ruleSetVersion: '3.2'
-        }
-      ]
-    }
-  }
-}
+// resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2022-07-01' = {
+//   name: 'WAF-Policy'
+//   location: paramlocation
+//   properties: {
+//     customRules: [
+//       {
+//         name: 'BlockMe'
+//         priority: 1
+//         ruleType: 'MatchRule'
+//         action: 'Block'
+//         matchConditions: [
+//           {
+//             matchVariables: [
+//               {
+//                 variableName: 'QueryString'
+//               }
+//             ]
+//             operator: 'Contains'
+//             negationConditon: false
+//             matchValues: [
+//               'blockme'
+//             ]
+//           }
+//         ]
+//       }
+//       {
+//         name: 'BlockEvilBot'
+//         priority: 2
+//         ruleType: 'MatchRule'
+//         action: 'Block'
+//         matchConditions: [
+//           {
+//             matchVariables: [
+//               {
+//                 variableName: 'RequestHeaders'
+//                 selector: 'User-Agent'
+//               }
+//             ]
+//             operator: 'Contains'
+//             negationConditon: false
+//             matchValues: [
+//               'evilbot'
+//             ]
+//             transforms: [
+//               'Lowercase'
+//             ]
+//           }
+//         ]
+//       }
+//     ]
+//     policySettings: {
+//       mode: 'Prevention'
+//       state: 'Enabled'
+//     }
+//     managedRules: {
+//       managedRuleSets: [
+//         {
+//           ruleSetType: 'OWASP'
+//           ruleSetVersion: '3.2'
+//         }
+//       ]
+//     }
+//   }
+// }
 
 output outAppGatewayId string = resApplicationGateway.id
 output outAppGatewayManId string = applicationGatewayIdentity.id

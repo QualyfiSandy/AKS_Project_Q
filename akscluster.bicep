@@ -33,10 +33,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
   }
   identity: {
     type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${aksClusterUserDefinedManagedIdentity.id}':{
-      }
-    }
+    userAssignedIdentities: {'${aksClusterUserDefinedManagedIdentity.id}':{}}
   }
   properties: {
     kubernetesVersion: paramK8sVersion
@@ -47,8 +44,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
       {
         name: 'systempool'
         count: agentCount
-        minCount: 2
-        maxCount: 10
+        minCount: 1
+        maxCount: 1
         maxPods: 50
         enableAutoScaling: true
         vmSize: agentVMSize
@@ -61,8 +58,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
       {
         name: 'apppool'
         count: agentCount
-        minCount: 2
-        maxCount: 10
+        minCount: 1
+        maxCount: 1
         maxPods: 50
         enableAutoScaling: true
         vmSize: agentVMSize
@@ -77,9 +74,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
       adminUsername: linuxAdminUsername
       ssh: {
         publicKeys: [
-          {
-            keyData: 'ssh-rsa ${sshRSAPublicKey}\n'
-          }
+          {keyData: 'ssh-rsa ${sshRSAPublicKey}\n'}
         ]
       }
     }
@@ -101,16 +96,12 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
     }
     addonProfiles: {
       ingressApplicationGateway: {
-        config: {
-          applicationGatewayId: paramAppGwId
-        }
+        config: {applicationGatewayId: paramAppGwId}
         enabled: true
       }
       omsAgent: {
         enabled: true
-        config: {
-          logAnalyticsWorkspaceResourceID: paramLogAnalyticsId
-        }
+        config: {logAnalyticsWorkspaceResourceID: paramLogAnalyticsId}
       }
     }
     azureMonitorProfile: {
