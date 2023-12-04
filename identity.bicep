@@ -14,6 +14,8 @@ resource applicationGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdent
 resource aksClusterIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {name: aksIdentityName}
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' existing = {name: paramkeyVaultName}
 resource KVManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {name: paramKeyVaultManagedIdentityName}
+resource keyVaultSecretsUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {name: '4633458b-17de-408a-b874-0445c86b69e6', scope: subscription()}
+resource keyVaultSecretsAdminRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {name: '00482a5a-887f-4fb3-b363-3b7fe8e74483', scope: subscription()}
 
 resource appGwNetContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: guid(applicationGatewayIdentity.id, netContributorRoleId, resourceGroup().id)
@@ -51,50 +53,40 @@ resource appGwContributorRoleAssignment 'Microsoft.Authorization/roleAssignments
   }
 }
 
-// resource keyVaultReaderRoleAssignment  'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-//   name: guid(KVManagedIdentity.id, readerRoleId, resourceGroup().id)
-//   properties: {
-//     roleDefinitionId: readerRoleId
-//     principalId: KVManagedIdentity.properties.principalId
-//     principalType: 'ServicePrincipal'
-//   }
-// }
+resource keyVaultReaderRoleAssignment  'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(KVManagedIdentity.id, readerRoleId, resourceGroup().id)
+  properties: {
+    roleDefinitionId: readerRoleId
+    principalId: KVManagedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
 
-// resource keyVaultAdminRoleAssignment  'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-//   name: guid(KVManagedIdentity.id, keyVaultSecretsAdminRole.id, resourceGroup().id)
-//   properties: {
-//     roleDefinitionId: keyVaultSecretsAdminRole.id
-//     principalId: KVManagedIdentity.properties.principalId
-//     principalType: 'ServicePrincipal'
-//   }
-// }
+resource keyVaultAdminRoleAssignment  'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(KVManagedIdentity.id, keyVaultSecretsAdminRole.id, resourceGroup().id)
+  properties: {
+    roleDefinitionId: keyVaultSecretsAdminRole.id
+    principalId: KVManagedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
 
-// resource keyVaultSecretsUserApplicationGatewayIdentityRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
-//   name: guid(keyVault.id, 'ApplicationGateway', 'keyVaultSecretsUser')
-//   scope: keyVault
-//   properties: {
-//     roleDefinitionId: keyVaultSecretsUserRole.id
-//     principalType: 'ServicePrincipal'
-//     principalId: applicationGatewayIdentity.properties.principalId
-//   }
-// }
+resource keyVaultSecretsUserApplicationGatewayIdentityRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(keyVault.id, 'ApplicationGateway', 'keyVaultSecretsUser')
+  scope: keyVault
+  properties: {
+    roleDefinitionId: keyVaultSecretsUserRole.id
+    principalType: 'ServicePrincipal'
+    principalId: applicationGatewayIdentity.properties.principalId
+  }
+}
 
-// resource keyVaultSecretsUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-//   name: '4633458b-17de-408a-b874-0445c86b69e6'
-//   scope: subscription()
-// }
-
-// resource keyVaultSecretsAdminRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-//   name: '00482a5a-887f-4fb3-b363-3b7fe8e74483'
-//   scope: subscription()
-// }
-
-// resource keyVaultCSIdriverSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-//   name: guid(aks.id, 'CSIDriver', keyVaultSecretsUserRole.id)
-//   scope: keyVault
-//   properties: {
-//     roleDefinitionId: keyVaultSecretsUserRole.id
-//     principalType: 'ServicePrincipal'
-//     principalId: aks.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId
-//   }
-// }
+resource keyVaultCSIdriverSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(aks.id, 'CSIDriver', keyVaultSecretsUserRole.id)
+  scope: keyVault
+  properties: {
+    roleDefinitionId: keyVaultSecretsUserRole.id
+    principalType: 'ServicePrincipal'
+    principalId: aks.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId
+  }
+}

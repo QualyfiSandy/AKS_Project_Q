@@ -4,7 +4,7 @@ param paramMonitorWorkspaceName string
 param paramlocation string
 param clusterName string
 param publicNetworkAccess string = 'Enabled'
-param actionGroupId string
+// param actionGroupId string
 
 // Variables
 var nodeRecordingRuleGroupPrefix = 'NodeRecordingRulesRuleGroup-'
@@ -409,325 +409,325 @@ resource nodeAndKubernetesRecordingRuleGroupNameWin 'Microsoft.AlertsManagement/
   }
 }
 
-resource communityALerts 'Microsoft.AlertsManagement/prometheusRuleGroups@2021-07-22-preview' = {
-  name: 'CommunityCIAlerts-${clusterName}'
-  location: paramlocation
-  properties: {
-    description: 'Kubernetes Alert RuleGroup-communityCIAlerts - 0.1'
-    scopes: [
-      azureMonitorWorkspace.id
-    ]
-    clusterName: clusterName
-    enabled: true
-    interval: 'PT1M'
-    rules: [
-      {
-        alert: 'KubePodCrashLooping'
-        expression: 'max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", job="kube-state-metrics"}[5m]) >= 1'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubePodNotReady'
-        expression: 'sum by (namespace, pod, cluster) (  max by(namespace, pod, cluster) (    kube_pod_status_phase{job="kube-state-metrics", phase=~"Pending|Unknown"}  ) * on(namespace, pod, cluster) group_left(owner_kind) topk by(namespace, pod, cluster) (    1, max by(namespace, pod, owner_kind, cluster) (kube_pod_owner{owner_kind!="Job"})  )) > 0'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeDeploymentReplicasMismatch'
-        expression: '(  kube_deployment_spec_replicas{job="kube-state-metrics"}    >  kube_deployment_status_replicas_available{job="kube-state-metrics"}) and (  changes(kube_deployment_status_replicas_updated{job="kube-state-metrics"}[10m])    ==  0)'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeStatefulSetReplicasMismatch'
-        expression: '(  kube_statefulset_status_replicas_ready{job="kube-state-metrics"}    !=  kube_statefulset_status_replicas{job="kube-state-metrics"}) and (  changes(kube_statefulset_status_replicas_updated{job="kube-state-metrics"}[10m])    ==  0)'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeJobNotCompleted'
-        expression: 'time() - max by(namespace, job_name, cluster) (kube_job_status_start_time{job="kube-state-metrics"}  and kube_job_status_active{job="kube-state-metrics"} > 0) > 43200'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeJobFailed'
-        expression: 'kube_job_failed{job="kube-state-metrics"}  > 0'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeHpaReplicasMismatch'
-        expression: '(kube_horizontalpodautoscaler_status_desired_replicas{job="kube-state-metrics"}  !=kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"})  and(kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"}  >kube_horizontalpodautoscaler_spec_min_replicas{job="kube-state-metrics"})  and(kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"}  <kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics"})  and changes(kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"}[15m]) == 0'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeHpaMaxedOut'
-        expression: 'kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"}  ==kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics"}'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeCPUQuotaOvercommit'
-        expression: 'sum(min without(resource) (kube_resourcequota{job="kube-state-metrics", type="hard", resource=~"(cpu|requests.cpu)"}))  /sum(kube_node_status_allocatable{resource="cpu", job="kube-state-metrics"})  > 1.5'
-        for: 'PT5M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeMemoryQuotaOvercommit'
-        expression: 'sum(min without(resource) (kube_resourcequota{job="kube-state-metrics", type="hard", resource=~"(memory|requests.memory)"}))  /sum(kube_node_status_allocatable{resource="memory", job="kube-state-metrics"})  > 1.5'
-        for: 'PT5M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeQuotaAlmostFull'
-        expression: 'kube_resourcequota{job="kube-state-metrics", type="used"}  / ignoring(instance, job, type)(kube_resourcequota{job="kube-state-metrics", type="hard"} > 0)  > 0.9 < 1'
-        for: 'PT15M'
-        labels: {
-          severity: 'info'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeVersionMismatch'
-        expression: 'count by (cluster) (count by (git_version, cluster) (label_replace(kubernetes_build_info{job!~"kube-dns|coredns"},"git_version","$1","git_version","(v[0-9]*.[0-9]*).*"))) > 1'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeNodeNotReady'
-        expression: 'kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeNodeUnreachable'
-        expression: '(kube_node_spec_taint{job="kube-state-metrics",key="node.kubernetes.io/unreachable",effect="NoSchedule"} unless ignoring(key,value) kube_node_spec_taint{job="kube-state-metrics",key=~"ToBeDeletedByClusterAutoscaler|cloud.google.com/impending-node-termination|aws-node-termination-handler/spot-itn"}) == 1'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeletTooManyPods'
-        expression: 'count by(cluster, node) (  (kube_pod_status_phase{job="kube-state-metrics",phase="Running"} == 1) * on(instance,pod,namespace,cluster) group_left(node) topk by(instance,pod,namespace,cluster) (1, kube_pod_info{job="kube-state-metrics"}))/max by(cluster, node) (  kube_node_status_capacity{job="kube-state-metrics",resource="pods"} != 1) > 0.95'
-        for: 'PT15M'
-        labels: {
-          severity: 'info'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-      {
-        alert: 'KubeNodeReadinessFlapping'
-        expression: 'sum(changes(kube_node_status_condition{status="true",condition="Ready"}[15m])) by (cluster, node) > 2'
-        for: 'PT15M'
-        labels: {
-          severity: 'warning'
-        }
-        severity: 3
-        enabled: true
-        resolveConfiguration: {
-          autoResolved: true
-          timeToResolve: 'PT10M'
-        }
-        actions: [
-          {
-            actionGroupId: actionGroupId
-          }
-        ]
-      }
-    ]
+// resource communityALerts 'Microsoft.AlertsManagement/prometheusRuleGroups@2021-07-22-preview' = {
+//   name: 'CommunityCIAlerts-${clusterName}'
+//   location: paramlocation
+//   properties: {
+//     description: 'Kubernetes Alert RuleGroup-communityCIAlerts - 0.1'
+//     scopes: [
+//       azureMonitorWorkspace.id
+//     ]
+//     clusterName: clusterName
+//     enabled: true
+//     interval: 'PT1M'
+//     rules: [
+//       {
+//         alert: 'KubePodCrashLooping'
+//         expression: 'max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", job="kube-state-metrics"}[5m]) >= 1'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubePodNotReady'
+//         expression: 'sum by (namespace, pod, cluster) (  max by(namespace, pod, cluster) (    kube_pod_status_phase{job="kube-state-metrics", phase=~"Pending|Unknown"}  ) * on(namespace, pod, cluster) group_left(owner_kind) topk by(namespace, pod, cluster) (    1, max by(namespace, pod, owner_kind, cluster) (kube_pod_owner{owner_kind!="Job"})  )) > 0'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeDeploymentReplicasMismatch'
+//         expression: '(  kube_deployment_spec_replicas{job="kube-state-metrics"}    >  kube_deployment_status_replicas_available{job="kube-state-metrics"}) and (  changes(kube_deployment_status_replicas_updated{job="kube-state-metrics"}[10m])    ==  0)'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeStatefulSetReplicasMismatch'
+//         expression: '(  kube_statefulset_status_replicas_ready{job="kube-state-metrics"}    !=  kube_statefulset_status_replicas{job="kube-state-metrics"}) and (  changes(kube_statefulset_status_replicas_updated{job="kube-state-metrics"}[10m])    ==  0)'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeJobNotCompleted'
+//         expression: 'time() - max by(namespace, job_name, cluster) (kube_job_status_start_time{job="kube-state-metrics"}  and kube_job_status_active{job="kube-state-metrics"} > 0) > 43200'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeJobFailed'
+//         expression: 'kube_job_failed{job="kube-state-metrics"}  > 0'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeHpaReplicasMismatch'
+//         expression: '(kube_horizontalpodautoscaler_status_desired_replicas{job="kube-state-metrics"}  !=kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"})  and(kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"}  >kube_horizontalpodautoscaler_spec_min_replicas{job="kube-state-metrics"})  and(kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"}  <kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics"})  and changes(kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"}[15m]) == 0'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeHpaMaxedOut'
+//         expression: 'kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"}  ==kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics"}'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeCPUQuotaOvercommit'
+//         expression: 'sum(min without(resource) (kube_resourcequota{job="kube-state-metrics", type="hard", resource=~"(cpu|requests.cpu)"}))  /sum(kube_node_status_allocatable{resource="cpu", job="kube-state-metrics"})  > 1.5'
+//         for: 'PT5M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeMemoryQuotaOvercommit'
+//         expression: 'sum(min without(resource) (kube_resourcequota{job="kube-state-metrics", type="hard", resource=~"(memory|requests.memory)"}))  /sum(kube_node_status_allocatable{resource="memory", job="kube-state-metrics"})  > 1.5'
+//         for: 'PT5M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeQuotaAlmostFull'
+//         expression: 'kube_resourcequota{job="kube-state-metrics", type="used"}  / ignoring(instance, job, type)(kube_resourcequota{job="kube-state-metrics", type="hard"} > 0)  > 0.9 < 1'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'info'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeVersionMismatch'
+//         expression: 'count by (cluster) (count by (git_version, cluster) (label_replace(kubernetes_build_info{job!~"kube-dns|coredns"},"git_version","$1","git_version","(v[0-9]*.[0-9]*).*"))) > 1'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeNodeNotReady'
+//         expression: 'kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeNodeUnreachable'
+//         expression: '(kube_node_spec_taint{job="kube-state-metrics",key="node.kubernetes.io/unreachable",effect="NoSchedule"} unless ignoring(key,value) kube_node_spec_taint{job="kube-state-metrics",key=~"ToBeDeletedByClusterAutoscaler|cloud.google.com/impending-node-termination|aws-node-termination-handler/spot-itn"}) == 1'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeletTooManyPods'
+//         expression: 'count by(cluster, node) (  (kube_pod_status_phase{job="kube-state-metrics",phase="Running"} == 1) * on(instance,pod,namespace,cluster) group_left(node) topk by(instance,pod,namespace,cluster) (1, kube_pod_info{job="kube-state-metrics"}))/max by(cluster, node) (  kube_node_status_capacity{job="kube-state-metrics",resource="pods"} != 1) > 0.95'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'info'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//       {
+//         alert: 'KubeNodeReadinessFlapping'
+//         expression: 'sum(changes(kube_node_status_condition{status="true",condition="Ready"}[15m])) by (cluster, node) > 2'
+//         for: 'PT15M'
+//         labels: {
+//           severity: 'warning'
+//         }
+//         severity: 3
+//         enabled: true
+//         resolveConfiguration: {
+//           autoResolved: true
+//           timeToResolve: 'PT10M'
+//         }
+//         actions: [
+//           {
+//             actionGroupId: actionGroupId
+//           }
+//         ]
+//       }
+//     ]
 
-  }
-}
+//   }
+// }
 
 // Outputs
 output id string = azureMonitorWorkspace.id

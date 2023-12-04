@@ -113,14 +113,14 @@ module modAksCluster 'akscluster.bicep' = {
   }
 }
 
-module modBastion 'bastion.bicep' = {
-  name: 'Bastion'
-  params: {
-    paramlocation: paramlocation
-    paramBastionSubnet: bastionSubnet.id
-    paramBastionSku: 'Basic'
-  }
-}
+// module modBastion 'bastion.bicep' = {
+//   name: 'Bastion'
+//   params: {
+//     paramlocation: paramlocation
+//     paramBastionSubnet: bastionSubnet.id
+//     paramBastionSku: 'Basic'
+//   }
+// }
 
 module modAppGW 'appgw.bicep' = {
   name: 'AppGateway'
@@ -131,34 +131,34 @@ module modAppGW 'appgw.bicep' = {
   }
 }
 
-module managedPrometheus 'managedPrometheus.bicep' = {
-  name: 'aks-sp-Prometheus'
-  params: {
-    clusterName: modAksCluster.outputs.outClusterName
-    paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
-    paramlocation: paramlocation
-    actionGroupId: actionGroup.outputs.outActionGroupId
-  }
-}
+// module managedPrometheus 'managedPrometheus.bicep' = {
+//   name: 'aks-sp-Prometheus'
+//   params: {
+//     clusterName: modAksCluster.outputs.outClusterName
+//     paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
+//     paramlocation: paramlocation
+//     // actionGroupId: actionGroup.outputs.outActionGroupId
+//   }
+// }
 
-module managedGrafana 'managedGrafana.bicep' = {
-  name: 'Grafana'
-  params: {
-    paramGrafanaName: 'aks-sp-grafana'
-    paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
-    paramlocation: paramlocation
-    paramPrometheusId: managedPrometheus.outputs.id
-    paramPrometheusName: 'Prometheus'
-  }
-}
+// module managedGrafana 'managedGrafana.bicep' = {
+//   name: 'Grafana'
+//   params: {
+//     paramGrafanaName: 'aks-sp-grafana'
+//     paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
+//     paramlocation: paramlocation
+//     paramPrometheusId: managedPrometheus.outputs.id
+//     paramPrometheusName: 'Prometheus'
+//   }
+// }
 
-module actionGroup 'actionGroup.bicep' = {
-  name: 'Action-Group'
-  params: {
-    emailAddress: 'alexander.pendleton@qualyfi.co.uk'
-    paramActionGroupName: 'aks-sp-action-group'
-  }
-}
+// module actionGroup 'actionGroup.bicep' = {
+//   name: 'Action-Group'
+//   params: {
+//     emailAddress: 'alexander.pendleton@qualyfi.co.uk'
+//     paramActionGroupName: 'aks-sp-action-group'
+//   }
+// }
 
 module identity 'identity.bicep' = {
   name: 'Identity'

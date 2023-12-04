@@ -103,6 +103,9 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
         enabled: true
         config: {logAnalyticsWorkspaceResourceID: paramLogAnalyticsId}
       }
+      azureKeyvaultSecretsProvider: {
+        enabled: true
+      }
     }
     azureMonitorProfile: {
       metrics: {
