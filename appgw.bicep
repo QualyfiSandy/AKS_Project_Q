@@ -2,13 +2,14 @@ param paramAppGatewayName string
 param paramlocation string
 param paramAgwSubnetId string
 
-// var varAgwId = resourceId('Microsoft.Network/applicationGateways', paramAppGatewayName)
 
+// Application Gateway Managed Identity
 resource applicationGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: '${paramAppGatewayName}Identity'
   location: paramlocation
 }
 
+// Application Gateway Public IP
 resource pipAppGateway 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
   name: 'pip-agw-${paramlocation}'
   location: paramlocation
@@ -16,7 +17,7 @@ resource pipAppGateway 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
   properties: {publicIPAllocationMethod: 'Static'}
 }
 
-// <-- APPLICATION GATEWAY RESOURCES --> //
+// Application Gateway
 resource resApplicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
   name: paramAppGatewayName
   location: paramlocation
@@ -117,71 +118,6 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2023-05-01
     // }
   }
 }
-
-// resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2022-07-01' = {
-//   name: 'WAF-Policy'
-//   location: paramlocation
-//   properties: {
-//     customRules: [
-//       {
-//         name: 'BlockMe'
-//         priority: 1
-//         ruleType: 'MatchRule'
-//         action: 'Block'
-//         matchConditions: [
-//           {
-//             matchVariables: [
-//               {
-//                 variableName: 'QueryString'
-//               }
-//             ]
-//             operator: 'Contains'
-//             negationConditon: false
-//             matchValues: [
-//               'blockme'
-//             ]
-//           }
-//         ]
-//       }
-//       {
-//         name: 'BlockEvilBot'
-//         priority: 2
-//         ruleType: 'MatchRule'
-//         action: 'Block'
-//         matchConditions: [
-//           {
-//             matchVariables: [
-//               {
-//                 variableName: 'RequestHeaders'
-//                 selector: 'User-Agent'
-//               }
-//             ]
-//             operator: 'Contains'
-//             negationConditon: false
-//             matchValues: [
-//               'evilbot'
-//             ]
-//             transforms: [
-//               'Lowercase'
-//             ]
-//           }
-//         ]
-//       }
-//     ]
-//     policySettings: {
-//       mode: 'Prevention'
-//       state: 'Enabled'
-//     }
-//     managedRules: {
-//       managedRuleSets: [
-//         {
-//           ruleSetType: 'OWASP'
-//           ruleSetVersion: '3.2'
-//         }
-//       ]
-//     }
-//   }
-// }
 
 output outAppGatewayId string = resApplicationGateway.id
 output outAppGatewayManId string = applicationGatewayIdentity.id

@@ -4,11 +4,14 @@ param skuName string = 'standard'
 param tenantId string = subscription().tenantId
 param paramKeyVaultManagedIdentityName string
 
+
+// Azure Keyvault Managed Identity
 resource KVManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: paramKeyVaultManagedIdentityName
   location: paramlocation
 }
 
+// Azure Keyvault
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: paramkeyVaultName
   location: paramlocation
