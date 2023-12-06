@@ -6,7 +6,6 @@ param paramPrometheusId string
 param paramGrafanaName string
 param paramlocation string
 
-@description('Specifies the sku of the Azure Managed Grafana resource.')
 param skuName string = 'Standard'
 
 @description('Specifies the api key setting of the Azure Managed Grafana resource.')
