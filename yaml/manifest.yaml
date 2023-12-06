@@ -34,7 +34,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: azure-vote-back
-        image: mcr.microsoft.com/oss/bitnami/redis:6.0.8
+        image: aksacrsandy.azurecr.io/mcr.microsoft.com/oss/bitnami/redis:6.0.8
         resources:
           requests:
             cpu: 250m
@@ -91,7 +91,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: azure-vote-front
-        image: mcr.microsoft.com/azuredocs/azure-vote-front:v1
+        image: aksacrsandy.azurecr.io/mcr.microsoft.com/azuredocs/azure-vote-front:v1
         ports:
         - containerPort: 80
         resources:

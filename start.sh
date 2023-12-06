@@ -28,18 +28,21 @@ publicKey=${arrayKey[@]:1:1}
 az deployment group create --resource-group $RG --template-file main.bicep --parameters aksClusterSshPublicKey=$publicKey paramCliKeyVaultName=$KV
 
 # This pulls the application from Docker
-docker compose -f azure-voting-app-redis/docker-compose.yaml up -d
-docker images
-docker ps
-docker compose down
+# docker compose -f azure-voting-app-redis/docker-compose.yaml up -d
+# docker images
+# docker ps
+# docker compose down
 
 # This creates the Azure Container Registry and logs in
 az acr create --resource-group $RG --name $ACRNAME --sku Basic
 az acr login --name $ACRNAME
 
 # This mounts of the application front and backends into the ACR
-az acr build --resource-group $RG --registry $ACRNAME --image mcr.microsoft.com/azuredocs/azure-vote-front:v1 ./azure-voting-app-redis/azure-vote --no-wait
-az acr build --registry $ACRNAME --resource-group $RG --image mcr.microsoft.com/oss/bitnami/redis:6.0.8 ./azure-voting-app-redis/azure-vote
+# az acr build --resource-group $RG --registry $ACRNAME --image mcr.microsoft.com/azuredocs/azure-vote-front:v1 ./azure-voting-app-redis/azure-vote --no-wait
+# az acr build --resource-group $RG --registry $ACRNAME --image mcr.microsoft.com/oss/bitnami/redis:6.0.8 ./azure-voting-app-redis/azure-vote
+
+az acr import --resource-group $RG --name $ACRNAME --image mcr.microsoft.com/azuredocs/azure-vote-front:v1 --source ./azure-voting-app-redis/azure-vote --no-wait
+az acr import --resource-group $RG --name $ACRNAME --image mcr.microsoft.com/oss/bitnami/redis:6.0.8 --source mcr.microsoft.com/oss/bitnami/redis:6.0.8
 
 # Pulls needed information for the deployment of the applications
 TENANT_ID=$(az account show --query tenantId -o tsv)

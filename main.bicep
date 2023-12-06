@@ -113,14 +113,14 @@ module modAksCluster 'modules/akscluster.bicep' = {
   }
 }
 
-module modBastion 'modules/bastion.bicep' = {
-  name: 'Bastion'
-  params: {
-    paramlocation: paramlocation
-    paramBastionSubnet: resVnet.properties.subnets[0].id
-    paramBastionSku: 'Basic'
-  }
-}
+// module modBastion 'modules/bastion.bicep' = {
+//   name: 'Bastion'
+//   params: {
+//     paramlocation: paramlocation
+//     paramBastionSubnet: resVnet.properties.subnets[0].id
+//     paramBastionSku: 'Basic'
+//   }
+// }
 
 module modAppGW 'modules/appgw.bicep' = {
   name: 'AppGateway'
@@ -131,25 +131,25 @@ module modAppGW 'modules/appgw.bicep' = {
   }
 }
 
-module managedPrometheus 'modules/managedPrometheus.bicep' = {
-  name: 'aks-sp-Prometheus'
-  params: {
-    clusterName: modAksCluster.outputs.outClusterName
-    paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
-    paramlocation: paramlocation
-  }
-}
+// module managedPrometheus 'modules/managedPrometheus.bicep' = {
+//   name: 'aks-sp-Prometheus'
+//   params: {
+//     clusterName: modAksCluster.outputs.outClusterName
+//     paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
+//     paramlocation: paramlocation
+//   }
+// }
 
-module managedGrafana 'modules/managedGrafana.bicep' = {
-  name: 'Grafana'
-  params: {
-    paramGrafanaName: 'aks-sp-grafana'
-    paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
-    paramlocation: paramlocation
-    paramPrometheusId: managedPrometheus.outputs.id
-    paramPrometheusName: 'Prometheus'
-  }
-}
+// module managedGrafana 'modules/managedGrafana.bicep' = {
+//   name: 'Grafana'
+//   params: {
+//     paramGrafanaName: 'aks-sp-grafana'
+//     paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
+//     paramlocation: paramlocation
+//     paramPrometheusId: managedPrometheus.outputs.id
+//     paramPrometheusName: 'Prometheus'
+//   }
+// }
 
 module identity 'modules/identity.bicep' = {
   name: 'Identity'
