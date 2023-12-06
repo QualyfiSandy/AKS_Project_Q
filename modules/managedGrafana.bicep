@@ -6,9 +6,8 @@ param paramPrometheusId string
 param paramGrafanaName string
 param paramlocation string
 
-param skuName string = 'Standard'
+param paramGrafanaSkuName string = 'Standard'
 
-@description('Specifies the api key setting of the Azure Managed Grafana resource.')
 param apiKey string = 'Enabled'
 
 @description('Specifies the scope for dns deterministic name hash calculation.')
@@ -35,7 +34,7 @@ resource managedGrafana 'Microsoft.Dashboard/grafana@2022-08-01' =  {
   name: paramGrafanaName
   location: paramlocation
   sku: {
-    name: skuName
+    name: paramGrafanaSkuName
   }
   identity: {
     type: 'SystemAssigned'

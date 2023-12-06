@@ -89,7 +89,7 @@ resource resVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   }
 }
 
-module modAksCluster 'akscluster.bicep' = {
+module modAksCluster 'modules/akscluster.bicep' = {
   name: 'AKS'
   dependsOn: [
     resVnet
@@ -113,7 +113,7 @@ module modAksCluster 'akscluster.bicep' = {
   }
 }
 
-module modBastion 'bastion.bicep' = {
+module modBastion 'modules/bastion.bicep' = {
   name: 'Bastion'
   params: {
     paramlocation: paramlocation
@@ -122,7 +122,7 @@ module modBastion 'bastion.bicep' = {
   }
 }
 
-module modAppGW 'appgw.bicep' = {
+module modAppGW 'modules/appgw.bicep' = {
   name: 'AppGateway'
   params: {
     paramAgwSubnetId: resVnet.properties.subnets[1].id
@@ -131,7 +131,7 @@ module modAppGW 'appgw.bicep' = {
   }
 }
 
-module managedPrometheus 'managedPrometheus.bicep' = {
+module managedPrometheus 'modules/managedPrometheus.bicep' = {
   name: 'aks-sp-Prometheus'
   params: {
     clusterName: modAksCluster.outputs.outClusterName
@@ -140,7 +140,7 @@ module managedPrometheus 'managedPrometheus.bicep' = {
   }
 }
 
-module managedGrafana 'managedGrafana.bicep' = {
+module managedGrafana 'modules/managedGrafana.bicep' = {
   name: 'Grafana'
   params: {
     paramGrafanaName: 'aks-sp-grafana'
@@ -151,7 +151,7 @@ module managedGrafana 'managedGrafana.bicep' = {
   }
 }
 
-module identity 'identity.bicep' = {
+module identity 'modules/identity.bicep' = {
   name: 'Identity'
   dependsOn: [
     modAppGW
@@ -166,7 +166,7 @@ module identity 'identity.bicep' = {
   }
 }
 
-module modKeyvault 'keyvault.bicep' = {
+module modKeyvault 'modules/keyvault.bicep' = {
   name: 'keyVault'
   params: {
     paramlocation: paramlocation
