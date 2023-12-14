@@ -41,8 +41,8 @@ az acr login --name $ACRNAME
 # az acr build --resource-group $RG --registry $ACRNAME --image mcr.microsoft.com/azuredocs/azure-vote-front:v1 ./azure-voting-app-redis/azure-vote --no-wait
 # az acr build --resource-group $RG --registry $ACRNAME --image mcr.microsoft.com/oss/bitnami/redis:6.0.8 ./azure-voting-app-redis/azure-vote
 
-az acr import --resource-group $RG --name $ACRNAME --image mcr.microsoft.com/azuredocs/azure-vote-front:v1 --source ./azure-voting-app-redis/azure-vote --no-wait
-az acr import --resource-group $RG --name $ACRNAME --image mcr.microsoft.com/oss/bitnami/redis:6.0.8 --source mcr.microsoft.com/oss/bitnami/redis:6.0.8
+az acr import --resource-group $RG --name $ACRNAME --image azure-vote-front:v1 --source mcr.microsoft.com/azuredocs/azure-vote-front:v1
+az acr import --resource-group $RG --name $ACRNAME --image redis:6.0.8 --source mcr.microsoft.com/oss/bitnami/redis:6.0.8
 
 # Pulls needed information for the deployment of the applications
 TENANT_ID=$(az account show --query tenantId -o tsv)

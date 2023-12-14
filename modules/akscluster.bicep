@@ -13,11 +13,9 @@ param paramAppGwId string
 param paramLogAnalyticsId string
 param linuxAdminUsername string
 param sshRSAPublicKey string
-
-resource resVnet 'Microsoft.Network/virtualNetworks@2023-05-01' existing = {name: 'aks-sp-vnet-${paramlocation}'}
-resource podSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'podSubnet',parent: resVnet}
-resource systemPoolSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'systemPoolSubnet',parent: resVnet}
-resource appPoolSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' existing = {name: 'appPoolSubnet',parent: resVnet}
+param paramSystemPoolSubnetId string
+param paramPodSubnetId string
+param paramAppPoolSubnetId string
 
 resource aksClusterUserDefinedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
   name: '${clusterName}ManagedIdentity'
@@ -49,8 +47,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
         maxPods: 50
         enableAutoScaling: true
         vmSize: agentVMSize
-        vnetSubnetID: systemPoolSubnet.id
-        podSubnetID: podSubnet.id
+        vnetSubnetID: paramSystemPoolSubnetId
+        podSubnetID: paramPodSubnetId
         osType: 'Linux'
         osSKU: 'CBLMariner'
         mode: 'System'
@@ -63,8 +61,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-09-01' = {
         maxPods: 50
         enableAutoScaling: true
         vmSize: agentVMSize
-        vnetSubnetID: appPoolSubnet.id
-        podSubnetID: podSubnet.id
+        vnetSubnetID: paramAppPoolSubnetId
+        podSubnetID: paramPodSubnetId
         osType: 'Linux'
         osSKU: 'CBLMariner'
         mode: 'System'

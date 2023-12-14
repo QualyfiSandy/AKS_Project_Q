@@ -110,6 +110,9 @@ module modAksCluster 'modules/akscluster.bicep' = {
     paramLogAnalyticsId: resLogAnalytics.id
     linuxAdminUsername: 'akssandyp'
     sshRSAPublicKey: aksClusterSshPublicKey
+    paramSystemPoolSubnetId: resVnet.properties.subnets[2].id
+    paramAppPoolSubnetId: resVnet.properties.subnets[3].id
+    paramPodSubnetId: resVnet.properties.subnets[4].id
   }
 }
 
@@ -176,3 +179,7 @@ module modKeyvault 'modules/keyvault.bicep' = {
 }
 
 output outBastionSubnetId string = resVnet.properties.subnets[0].id
+output outAppGWSubnetId string = resVnet.properties.subnets[1].id
+output outSystemPoolSubnetId string = resVnet.properties.subnets[2].id
+output outAppPoolSubnetId string = resVnet.properties.subnets[3].id
+output outPodSubnetId string = resVnet.properties.subnets[4].id
