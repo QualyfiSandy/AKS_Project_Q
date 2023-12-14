@@ -1,10 +1,8 @@
 // Parameters
-
 param paramMonitorWorkspaceName string
 param paramlocation string
 param clusterName string
 param publicNetworkAccess string = 'Enabled'
-// param actionGroupId string
 
 // Variables
 var nodeRecordingRuleGroupPrefix = 'NodeRecordingRulesRuleGroup-'
@@ -20,7 +18,7 @@ var nodeAndKubernetesRecordingRuleGroupWinName = '${nodeAndKubernetesRecordingRu
 var RecordingRuleGroupDescriptionWin = 'Recording Rules RuleGroup for Win'
 var version = ' - 0.1'
 
-// Resources
+// Existing Resources
 resource aks 'Microsoft.ContainerService/managedClusters@2023-06-02-preview' existing = {name: clusterName}
 
 resource azureMonitorWorkspace 'Microsoft.Monitor/accounts@2023-04-03' = {

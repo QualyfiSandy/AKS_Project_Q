@@ -21,12 +21,6 @@ resource pipAppGateway 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
 resource resApplicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
   name: paramAppGatewayName
   location: paramlocation
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${applicationGatewayIdentity.id}': {}
-    }
-  }
   properties: {
     sku: {
       name: 'Standard_v2'
@@ -113,9 +107,6 @@ resource resApplicationGateway 'Microsoft.Network/applicationGateways@2023-05-01
         }
       }
     ]
-    // firewallPolicy: {
-    //   id: wafPolicy.id
-    // }
   }
 }
 

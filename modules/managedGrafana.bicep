@@ -6,10 +6,8 @@ param paramPrometheusId string
 param paramGrafanaName string
 param paramlocation string
 
-@description('Specifies the sku of the Azure Managed Grafana resource.')
-param skuName string = 'Standard'
+param paramGrafanaSkuName string = 'Standard'
 
-@description('Specifies the api key setting of the Azure Managed Grafana resource.')
 param apiKey string = 'Enabled'
 
 @description('Specifies the scope for dns deterministic name hash calculation.')
@@ -25,18 +23,18 @@ param publicNetworkAccess string = 'Enabled'
 param zoneRedundancy string = 'Disabled'
 
 @description('Specifies the object id of an Azure Active Directory user. In general, this the object id of the system administrator who deploys the Azure resources.')
-param userId string = 'd7733761-74f5-473d-8e11-5937add5ee79'
+// param userId string = 'd7733761-74f5-473d-8e11-5937add5ee79'
 
 resource mmonitoringReaderRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {name: '43d0d8ad-25c7-4714-9337-8ba259a9fe05',scope: subscription()}
 resource monitoringDataReaderRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {name: 'b0d8363b-8ddd-447d-831f-62ca05bff136',scope: subscription()}
-resource grafanaAdminRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {name: '22926164-76b3-42b3-bc55-97df8dab3e41',scope: subscription()}
+// resource grafanaAdminRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {name: '22926164-76b3-42b3-bc55-97df8dab3e41',scope: subscription()}
 resource azureMonitorWorkspace 'Microsoft.Monitor/accounts@2023-04-03' existing = {name: paramMonitorWorkspaceName}
 
 resource managedGrafana 'Microsoft.Dashboard/grafana@2022-08-01' =  {
   name: paramGrafanaName
   location: paramlocation
   sku: {
-    name: skuName
+    name: paramGrafanaSkuName
   }
   identity: {
     type: 'SystemAssigned'
@@ -55,20 +53,20 @@ resource managedGrafana 'Microsoft.Dashboard/grafana@2022-08-01' =  {
   }
 }
 
-// Assign the Monitoring Reader role to the Azure Managed Grafana system-assigned managed identity at the workspace scope
-resource monitoringReaderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name:  guid(paramGrafanaName, paramPrometheusName, mmonitoringReaderRole.id)
-  scope: azureMonitorWorkspace
-  properties: {
-    roleDefinitionId: mmonitoringReaderRole.id
-    principalId: managedGrafana.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// // Assign the Monitoring Reader role to the Azure Managed Grafana system-assigned managed identity at the workspace scope
+// resource monitoringReaderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//   name:  guid(paramGrafanaName, paramPrometheusName, mmonitoringReaderRole.id)
+//   scope: azureMonitorWorkspace
+//   properties: {
+//     roleDefinitionId: mmonitoringReaderRole.id
+//     principalId: managedGrafana.identity.principalId
+//     principalType: 'ServicePrincipal'
+//   }
+// }
 
 // Assign the Monitoring Data Reader role to the Azure Managed Grafana system-assigned managed identity at the workspace scope
 resource monitoringDataReaderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name:  guid(paramGrafanaName, paramGrafanaName, monitoringDataReaderRole.id)
+  name:  guid(paramGrafanaName, paramPrometheusName, monitoringDataReaderRole.id)
   scope: azureMonitorWorkspace
   properties: {
     roleDefinitionId: monitoringDataReaderRole.id
@@ -78,15 +76,15 @@ resource monitoringDataReaderRoleAssignment 'Microsoft.Authorization/roleAssignm
 }
 
 // Assign the Grafana Admin role to the AKS admin group at the resource scope
-resource grafanaAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(userId)) {
-  name:  guid(paramGrafanaName, userId, grafanaAdminRole.id)
-  scope: managedGrafana
-  properties: {
-    roleDefinitionId: grafanaAdminRole.id
-    principalId: userId
-    principalType: 'User'
-  }
-}
+// resource grafanaAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(userId)) {
+//   name:  guid(paramGrafanaName, userId, grafanaAdminRole.id)
+//   scope: managedGrafana
+//   properties: {
+//     roleDefinitionId: grafanaAdminRole.id
+//     principalId: userId
+//     principalType: 'User'
+//   }
+// }
 
 // Outputs
 output id string = managedGrafana.id

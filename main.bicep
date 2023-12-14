@@ -89,7 +89,7 @@ resource resVnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   }
 }
 
-module modAksCluster 'akscluster.bicep' = {
+module modAksCluster 'modules/akscluster.bicep' = {
   name: 'AKS'
   dependsOn: [
     resVnet
@@ -110,19 +110,22 @@ module modAksCluster 'akscluster.bicep' = {
     paramLogAnalyticsId: resLogAnalytics.id
     linuxAdminUsername: 'akssandyp'
     sshRSAPublicKey: aksClusterSshPublicKey
+    paramSystemPoolSubnetId: resVnet.properties.subnets[2].id
+    paramAppPoolSubnetId: resVnet.properties.subnets[3].id
+    paramPodSubnetId: resVnet.properties.subnets[4].id
   }
 }
 
-module modBastion 'bastion.bicep' = {
-  name: 'Bastion'
-  params: {
-    paramlocation: paramlocation
-    paramBastionSubnet: resVnet.properties.subnets[0].id
-    paramBastionSku: 'Basic'
-  }
-}
+// module modBastion 'modules/bastion.bicep' = {
+//   name: 'Bastion'
+//   params: {
+//     paramlocation: paramlocation
+//     paramBastionSubnet: resVnet.properties.subnets[0].id
+//     paramBastionSku: 'Basic'
+//   }
+// }
 
-module modAppGW 'appgw.bicep' = {
+module modAppGW 'modules/appgw.bicep' = {
   name: 'AppGateway'
   params: {
     paramAgwSubnetId: resVnet.properties.subnets[1].id
@@ -131,27 +134,27 @@ module modAppGW 'appgw.bicep' = {
   }
 }
 
-module managedPrometheus 'managedPrometheus.bicep' = {
-  name: 'aks-sp-Prometheus'
-  params: {
-    clusterName: modAksCluster.outputs.outClusterName
-    paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
-    paramlocation: paramlocation
-  }
-}
+// module managedPrometheus 'modules/managedPrometheus.bicep' = {
+//   name: 'aks-sp-Prometheus'
+//   params: {
+//     clusterName: modAksCluster.outputs.outClusterName
+//     paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
+//     paramlocation: paramlocation
+//   }
+// }
 
-module managedGrafana 'managedGrafana.bicep' = {
-  name: 'Grafana'
-  params: {
-    paramGrafanaName: 'aks-sp-grafana'
-    paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
-    paramlocation: paramlocation
-    paramPrometheusId: managedPrometheus.outputs.id
-    paramPrometheusName: 'Prometheus'
-  }
-}
+// module managedGrafana 'modules/managedGrafana.bicep' = {
+//   name: 'Grafana'
+//   params: {
+//     paramGrafanaName: 'aks-sp-grafana'
+//     paramMonitorWorkspaceName: 'aks-sp-Monitor-Workspace'
+//     paramlocation: paramlocation
+//     paramPrometheusId: managedPrometheus.outputs.id
+//     paramPrometheusName: 'Prometheus'
+//   }
+// }
 
-module identity 'identity.bicep' = {
+module identity 'modules/identity.bicep' = {
   name: 'Identity'
   dependsOn: [
     modAppGW
@@ -166,7 +169,7 @@ module identity 'identity.bicep' = {
   }
 }
 
-module modKeyvault 'keyvault.bicep' = {
+module modKeyvault 'modules/keyvault.bicep' = {
   name: 'keyVault'
   params: {
     paramlocation: paramlocation
@@ -176,3 +179,7 @@ module modKeyvault 'keyvault.bicep' = {
 }
 
 output outBastionSubnetId string = resVnet.properties.subnets[0].id
+output outAppGWSubnetId string = resVnet.properties.subnets[1].id
+output outSystemPoolSubnetId string = resVnet.properties.subnets[2].id
+output outAppPoolSubnetId string = resVnet.properties.subnets[3].id
+output outPodSubnetId string = resVnet.properties.subnets[4].id
